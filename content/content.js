@@ -695,23 +695,6 @@
     return '';
   }
 
-  // Helper: Fetch file content from ADO API
-  async function fetchFileContent(context, objectId) {
-    const url = context.isLegacy
-      ? `https://${context.org}.visualstudio.com/${context.project}/_apis/git/repositories/${context.repo}/items?objectId=${objectId}&api-version=7.0`
-      : `https://dev.azure.com/${context.org}/${context.project}/_apis/git/repositories/${context.repo}/items?objectId=${objectId}&api-version=7.0`;
-      
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        return await response.text();
-      }
-    } catch (e) {
-      console.error('Failed to fetch file content:', e);
-    }
-    return '';
-  }
-
   // Helper: Parse ADO URL to get context
   function getADOContext() {
     const url = window.location.href;
