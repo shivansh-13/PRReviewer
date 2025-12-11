@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0078d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#106ebe;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#grad1)" filter="url(#shadow)"/>
+  
+  <!-- Code lines -->
+  <rect x="24" y="32" width="60" height="6" rx="3" fill="white" opacity="0.7"/>
+  <rect x="24" y="46" width="48" height="6" rx="3" fill="white" opacity="0.5"/>
+  <rect x="24" y="60" width="56" height="6" rx="3" fill="white" opacity="0.6"/>
+  <rect x="24" y="74" width="40" height="6" rx="3" fill="white" opacity="0.4"/>
+  
+  <!-- AI badge -->
+  <circle cx="96" cy="88" r="24" fill="#28a745"/>
+  <text x="96" y="96" text-anchor="middle" font-size="24" font-family="Arial" font-weight="bold" fill="white">AI</text>
+</svg>

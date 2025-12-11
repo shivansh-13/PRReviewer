@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADO PR Reviewer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🤖 ADO PR Reviewer</h1>
+      <p class="subtitle">AI-Powered Code Review</p>
+    </header>
+
+    <!-- Settings Section -->
+    <section id="settings-section" class="section">
+      <h2>⚙️ Settings</h2>
+      <div class="form-group">
+        <label for="api-key">Gemini API Key</label>
+        <div class="input-group">
+          <input type="password" id="api-key" placeholder="Enter your Gemini API key">
+          <button id="toggle-key" class="icon-btn" title="Show/Hide">👁️</button>
+        </div>
+        <small>Get your key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+      </div>
+      
+      <div class="form-group">
+        <label for="model-select">Model</label>
+        <select id="model-select">
+          <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash-Lite (Free ✓)</option>
+          <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite (Free)</option>
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+        </select>
+        <small>Free tier: Use Flash-Lite models</small>
+      </div>
+
+      <div class="form-group">
+        <label for="review-depth">Review Depth</label>
+        <select id="review-depth">
+          <option value="quick">Quick Review</option>
+          <option value="standard" selected>Standard Review</option>
+          <option value="thorough">Thorough Review</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Review Focus Areas</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-bugs" checked> Bugs & Logic Errors
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-security" checked> Security Issues
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-performance" checked> Performance
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-style" checked> Code Style
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-naming"> Naming Conventions
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-docs"> Documentation
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="check-tests"> Test Coverage
+          </label>
+        </div>
+      </div>
+
+      <button id="save-settings" class="btn btn-primary">💾 Save Settings</button>
+    </section>
+
+    <!-- Review Actions Section -->
+    <section id="actions-section" class="section">
+      <h2>📝 Review Actions</h2>
+      
+      <div class="status-bar" id="status-bar">
+        <span class="status-icon">⏳</span>
+        <span class="status-text">Ready to review</span>
+      </div>
+
+      <div class="button-group">
+        <button id="review-current" class="btn btn-success">
+          🔍 Review Current File
+        </button>
+        <button id="review-all" class="btn btn-primary">
+          📋 Review All Changes
+        </button>
+      </div>
+
+      <div class="button-group">
+        <button id="review-selected" class="btn btn-secondary">
+          ✂️ Review Selection
+        </button>
+        <button id="clear-comments" class="btn btn-warning">
+          🗑️ Clear AI Comments
+        </button>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats-section" class="section">
+      <h2>📊 Review Stats</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-value" id="stat-files">0</span>
+          <span class="stat-label">Files</span>
+        </div>
+        <div class="stat-item critical">
+          <span class="stat-value" id="stat-critical">0</span>
+          <span class="stat-label">Critical</span>
+        </div>
+        <div class="stat-item warning">
+          <span class="stat-value" id="stat-warnings">0</span>
+          <span class="stat-label">Warnings</span>
+        </div>
+        <div class="stat-item info">
+          <span class="stat-value" id="stat-suggestions">0</span>
+          <span class="stat-label">Suggestions</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>v1.0.0 | <a href="#" id="help-link">Help</a> | <a href="#" id="feedback-link">Feedback</a></p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
