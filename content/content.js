@@ -712,7 +712,7 @@
     }
     
     // Pattern 2: https://{org}.visualstudio.com/{project}/_git/{repo}/pullrequest/{prId}
-    const vsMatch = url.match(/([^\.]+)\.visualstudio\.com\/([^\/]+)\/_git\/([^\/]+)\/pullrequest\/(\d+)/);
+    const vsMatch = url.match(/https:\/\/([^\.]+)\.visualstudio\.com\/([^\/]+)\/_git\/([^\/]+)\/pullrequest\/(\d+)/);
     if (vsMatch) {
       return {
         org: vsMatch[1],
