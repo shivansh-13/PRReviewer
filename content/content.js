@@ -135,49 +135,14 @@
       }
     }
 
-    // Strategy 0: Side-by-side diff view (PRIMARY - most accurate)
+    // Strategy 0: Side-by-side diff view (PRIMARY fallback)
     extractedDiffs = extractFromSideBySideView();
     if (extractedDiffs.length > 0) {
       console.log('ADO PR Reviewer: Found diffs using side-by-side view strategy');
       return type === 'current' ? [extractedDiffs[0]] : extractedDiffs;
     }
 
-    // Strategy 1: Modern ADO diff viewer (repos-changes-viewer)
-    extractedDiffs = extractFromModernViewer();
-    if (extractedDiffs.length > 0) {
-      console.log('ADO PR Reviewer: Found diffs using modern viewer strategy');
-      return type === 'current' ? [extractedDiffs[0]] : extractedDiffs;
-    }
-
-    // Strategy 2: File diff containers
-    extractedDiffs = extractFromFileDiffContainers();
-    if (extractedDiffs.length > 0) {
-      console.log('ADO PR Reviewer: Found diffs using file container strategy');
-      return type === 'current' ? [extractedDiffs[0]] : extractedDiffs;
-    }
-
-    // Strategy 3: Code editor / Monaco editor
-    extractedDiffs = extractFromMonacoEditor();
-    if (extractedDiffs.length > 0) {
-      console.log('ADO PR Reviewer: Found diffs using Monaco editor strategy');
-      return type === 'current' ? [extractedDiffs[0]] : extractedDiffs;
-    }
-
-    // Strategy 4: Generic code blocks
-    extractedDiffs = extractFromGenericCodeBlocks();
-    if (extractedDiffs.length > 0) {
-      console.log('ADO PR Reviewer: Found diffs using generic code blocks strategy');
-      return type === 'current' ? [extractedDiffs[0]] : extractedDiffs;
-    }
-
-    // Strategy 5: Last resort - get all visible text from diff area
-    extractedDiffs = extractFromVisibleDiffArea();
-    if (extractedDiffs.length > 0) {
-      console.log('ADO PR Reviewer: Found diffs using visible diff area strategy');
-      return type === 'current' ? [extractedDiffs[0]] : extractedDiffs;
-    }
-
-    console.log('ADO PR Reviewer: No diffs found with any strategy');
+    console.log('ADO PR Reviewer: No diffs found with available strategies');
     return [];
   }
 
@@ -294,63 +259,10 @@
   }
 
   // Strategy 1: Modern ADO diff viewer
-  function extractFromModernViewer() {
-    const diffs = [];
-    
-    // Look for the file tree/list to get all files
-    const fileItems = document.querySelectorAll(
-      '[class*="repos-changes-item"], ' +
-      '[class*="file-item"], ' +
-      '.repos-summary-file-path, ' +
-      '[data-focuszone*="file"], ' +
-      '.file-row, ' +
-      '[role="treeitem"]'
-    );
 
-    // Get the currently displayed diff content
-    const diffContent = extractCurrentDiffContent();
-    
-    if (diffContent && diffContent.content) {
-      diffs.push(diffContent);
-    }
-
-    // If we found file items but no diff content, extract file names for context
-    if (diffs.length === 0 && fileItems.length > 0) {
-      const filename = getCurrentFileName();
-      const content = extractAllVisibleCode();
-      if (content) {
-        diffs.push({
-          filename: filename || 'Current File',
-          content: content,
-          element: document.body
-        });
-      }
-    }
-
-    return diffs;
-  }
 
   // Extract the currently displayed diff content
-  function extractCurrentDiffContent() {
-    // Try to find diff viewer container
-    const diffViewers = document.querySelectorAll(
-      '[class*="repos-diff"], ' +
-      '[class*="diff-viewer"], ' +
-      '[class*="file-content"], ' +
-      '.compare-files-container, ' +
-      '[class*="side-by-side"], ' +
-      '[class*="inline-diff"]'
-    );
 
-    for (const viewer of diffViewers) {
-      const content = extractDiffFromContainer(viewer);
-      if (content && content.content && content.content.trim().length > 50) {
-        return content;
-      }
-    }
-
-    return null;
-  }
 
   // Extract diff from a specific container
   function extractDiffFromContainer(container) {
@@ -442,115 +354,13 @@
   }
 
   // Strategy 2: File diff containers
-  function extractFromFileDiffContainers() {
-    const diffs = [];
-    
-    const containers = document.querySelectorAll(
-      '.file-container, ' +
-      '[class*="file-diff"], ' +
-      '[class*="repos-file"], ' +
-      '.diff-file'
-    );
 
-    containers.forEach(container => {
-      const diff = extractDiffFromContainer(container);
-      if (diff && diff.content && diff.content.trim().length > 20) {
-        diffs.push(diff);
-      }
-    });
 
-    return diffs;
-  }
 
-  // Strategy 3: Monaco editor content
-  function extractFromMonacoEditor() {
-    const diffs = [];
-    
-    // Monaco editors in ADO
-    const editors = document.querySelectorAll(
-      '.monaco-editor, ' +
-      '[class*="monaco"], ' +
-      '.editor-container'
-    );
 
-    editors.forEach(editor => {
-      const viewLines = editor.querySelectorAll('.view-lines .view-line');
-      if (viewLines.length > 0) {
-        let content = '';
-        viewLines.forEach(line => {
-          content += (line.textContent || '') + '\n';
-        });
-        
-        if (content.trim()) {
-          diffs.push({
-            filename: getCurrentFileName() || 'Editor Content',
-            content: content.trim(),
-            element: editor
-          });
-        }
-      }
-    });
 
-    return diffs;
-  }
 
-  // Strategy 4: Generic code blocks
-  function extractFromGenericCodeBlocks() {
-    const diffs = [];
-    
-    const codeBlocks = document.querySelectorAll(
-      'pre, code, ' +
-      '[class*="code-content"], ' +
-      '[class*="source-code"], ' +
-      '.hljs'
-    );
 
-    codeBlocks.forEach(block => {
-      const content = block.textContent?.trim();
-      if (content && content.length > 50) {
-        diffs.push({
-          filename: getCurrentFileName() || 'Code Block',
-          content: content,
-          element: block
-        });
-      }
-    });
-
-    return diffs;
-  }
-
-  // Strategy 5: Visible diff area
-  function extractFromVisibleDiffArea() {
-    const diffs = [];
-    
-    // Find the main content area
-    const mainSelectors = [
-      '[class*="repos-changes"]',
-      '[class*="diff-viewer"]',
-      '[class*="pull-request-diff"]',
-      '[class*="file-content"]',
-      '.repos-files-container',
-      '[role="main"]',
-      '.bolt-page-content'
-    ];
-
-    for (const selector of mainSelectors) {
-      const container = document.querySelector(selector);
-      if (container) {
-        const content = extractAllVisibleCode(container);
-        if (content && content.length > 100) {
-          diffs.push({
-            filename: getCurrentFileName() || 'All Changes',
-            content: content,
-            element: container
-          });
-          break;
-        }
-      }
-    }
-
-    return diffs;
-  }
 
   // Strategy 6: Azure DevOps REST API (Most reliable for content)
   async function extractFromADOApi() {
@@ -784,24 +594,7 @@
     return '';
   }
 
-  // Extract diff from a single file container (legacy support)
-  function extractSingleDiff(container) {
-    return extractDiffFromContainer(container);
-  }
 
-  // Get filename from container (legacy support)
-  function getFilename(container) {
-    if (!container) return getCurrentFileName() || 'Unknown file';
-    
-    const nameElement = container.querySelector(
-      '.file-name, .file-path, [class*="file-header"] a, ' +
-      '.file-content-header, [class*="file-path"]'
-    );
-    return nameElement?.textContent?.trim() || 
-           container.getAttribute('data-path') || 
-           getCurrentFileName() ||
-           'Unknown file';
-  }
 
   // Wait for element to appear
   function waitForElement(selector, timeout = 5000) {
@@ -845,8 +638,8 @@
     }
   }
 
-  // Build the review prompt
-  function buildReviewPrompt(diff, settings) {
+  // Build focus areas string
+  function buildFocusAreas(settings) {
     const focusAreas = [];
     if (settings.focusAreas.bugs) focusAreas.push('bugs, logic errors, and potential runtime issues');
     if (settings.focusAreas.security) focusAreas.push('security vulnerabilities (SQL injection, XSS, auth issues, etc.)');
@@ -855,38 +648,59 @@
     if (settings.focusAreas.naming) focusAreas.push('naming conventions and clarity');
     if (settings.focusAreas.docs) focusAreas.push('missing documentation and comments');
     if (settings.focusAreas.tests) focusAreas.push('test coverage concerns');
+    return focusAreas;
+  }
 
-    const depthInstructions = {
+  // Get depth instructions
+  function getDepthInstructions(depth) {
+    const instructions = {
       quick: 'Focus only on critical issues. Be brief.',
       standard: 'Provide a balanced review covering important issues.',
       thorough: 'Do an in-depth analysis. Check every detail. Be comprehensive.'
     };
+    return instructions[depth] || instructions.standard;
+  }
 
-    // Handle API-based diffs (full file comparison)
-    if (diff.isApiDiff) {
-      return `You are an expert code reviewer performing a Pull Request review.
-      
-FILE: ${diff.filename}
-CHANGE TYPE: ${diff.changeType}
+  // Compute unified diff between two strings
+  function computeUnifiedDiff(original, modified, filename = 'file') {
+    const originalLines = original.split('\n');
+    const modifiedLines = modified.split('\n');
 
-I will provide the ORIGINAL code and the NEW code.
-1. Identify the changes between the two versions.
-2. Review ONLY the NEW/CHANGED code.
+    const diff = [];
+    const maxLines = Math.max(originalLines.length, modifiedLines.length);
 
-ORIGINAL CODE:
-\`\`\`
-${(diff.originalContent || '').substring(0, 20000)}
-\`\`\`
+    // Find changed lines
+    for (let i = 0; i < maxLines; i++) {
+      const origLine = originalLines[i];
+      const modLine = modifiedLines[i];
 
-NEW CODE:
-\`\`\`
-${(diff.newContent || '').substring(0, 20000)}
-\`\`\`
+      if (origLine === undefined && modLine !== undefined) {
+        // Line added
+        diff.push(`+ ${modLine}`);
+      } else if (origLine !== undefined && modLine === undefined) {
+        // Line removed
+        diff.push(`- ${origLine}`);
+      } else if (origLine !== modLine) {
+        // Line changed
+        if (origLine) diff.push(`- ${origLine}`);
+        if (modLine) diff.push(`+ ${modLine}`);
+      }
+      // If lines are the same, we don't include them in the diff
+    }
+
+    return diff.length > 0 ? diff.join('\n') : 'No changes detected';
+  }
+
+  // Build common review requirements and response format
+  function buildReviewRequirementsAndFormat(focusAreas, depthInstruction) {
+    return `
 
 CRITICAL REVIEW REQUIREMENTS:
 1. Review ONLY the new/changed code - ignore unchanged code
-2. ${depthInstructions[settings.reviewDepth] || depthInstructions.standard}
+2. ${depthInstruction}
 3. Focus areas: ${focusAreas.join(', ')}
+4. **METHOD VISIBILITY RULE**: If a method/function itself is not shown in the diff, do NOT suggest changes or improvements to that method
+5. **EXPORT USAGE CHECK**: If anything is exported in the diff, it MUST be used/imported in at least one other file in the same PR, otherwise flag as unused export
 
 FIRST: Provide a brief SUMMARY of what this change does (2-3 sentences max).
 
@@ -899,12 +713,17 @@ CONTEXTUAL ANALYSIS - Flag these issues:
 - **Dead code**: New code paths that can never be reached
 - **Missing error handling**: New async functions without try-catch, new promises without .catch()
 - **Unfinished TODOs**: New TODO/FIXME comments that should be addressed before merge
+- **Null safety**: Check for potential null pointer exceptions, missing null checks, unsafe object access
+- **Exception handling**: Flag code that could throw exceptions without proper handling
 
 PR-SPECIFIC CHECKS:
 - If a new function is exported, ask: "Is this export consumed elsewhere in the PR?"
 - If a new interface/type is defined, ask: "Is this type used in the PR?"
 - If a new constant is exported, ask: "Where is this constant used?"
 - Flag any new public API that lacks documentation
+- **EXPORT VERIFICATION**: For any export in the diff, verify it has a corresponding import in another file
+- **NULL CHECKS**: Flag any object property access, array access, or method calls that could fail with null/undefined
+- **METHOD CHANGES**: Only suggest improvements to methods that are actually shown in the diff
 
 RESPONSE FORMAT (JSON object with summary and issues):
 {
@@ -918,7 +737,7 @@ RESPONSE FORMAT (JSON object with summary and issues):
     {
       "line": <line number or range like "10-15">,
       "severity": "critical" | "warning" | "suggestion",
-      "category": "bug" | "security" | "performance" | "style" | "unused-export" | "incomplete" | "documentation",
+      "category": "bug" | "security" | "performance" | "style" | "unused-export" | "incomplete" | "documentation" | "null-safety",
       "title": "<brief title>",
       "description": "<detailed explanation>",
       "suggestion": "<how to fix, include code if helpful>"
@@ -929,8 +748,83 @@ RESPONSE FORMAT (JSON object with summary and issues):
 If no issues found, return: {"summary": {...}, "issues": []}
 
 IMPORTANT: Return ONLY valid JSON object, no markdown or extra text.`;
-    }
+  }
 
+  // Build prompt for API-based diffs (full file comparison)
+  function buildApiDiffPrompt(diff, focusAreas, depthInstruction) {
+    const originalContent = diff.originalContent || '';
+    const newContent = diff.newContent || '';
+
+    // Compute the actual differences instead of sending entire files
+    const diffContent = computeUnifiedDiff(originalContent, newContent, diff.filename);
+
+    return `You are an expert code reviewer performing a Pull Request review.
+
+FILE: ${diff.filename}
+CHANGE TYPE: ${diff.changeType}
+
+Here are the CHANGES (diff) between the original and new versions:
+\`\`\`diff
+${diffContent}
+\`\`\`
+
+REVIEW REQUIREMENTS:
+1. Review ONLY the changed/added code shown in the diff above
+2. ${depthInstruction}
+3. Focus areas: ${focusAreas.join(', ')}
+4. **METHOD VISIBILITY RULE**: If a method/function itself is not shown in the diff, do NOT suggest changes or improvements to that method
+5. **EXPORT USAGE CHECK**: If anything is exported in the diff, it MUST be used/imported in at least one other file in the same PR, otherwise flag as unused export
+
+FIRST: Provide a brief SUMMARY of what this change does (2-3 sentences max).
+
+CONTEXTUAL ANALYSIS - Flag these issues in the CHANGED code:
+- **Unused exports**: If a new function/class/constant is exported, flag it as needing to be consumed somewhere in the PR
+- **Incomplete implementations**: New functions that are declared but might not be called/used
+- **Missing imports**: If new code references something that appears to need importing
+- **Orphaned code**: New code that doesn't seem to integrate with anything
+- **API contracts**: New exported functions should have clear contracts (types, docs)
+- **Dead code**: New code paths that can never be reached
+- **Missing error handling**: New async functions without try-catch, new promises without .catch()
+- **Unfinished TODOs**: New TODO/FIXME comments that should be addressed before merge
+- **Null safety**: Check for potential null pointer exceptions, missing null checks, unsafe object access
+- **Exception handling**: Flag code that could throw exceptions without proper handling
+
+PR-SPECIFIC CHECKS:
+- If a new function is exported, ask: "Is this export consumed elsewhere in the PR?"
+- If a new interface/type is defined, ask: "Is this type used in the PR?"
+- If a new constant is exported, ask: "Where is this constant used?"
+- Flag any new public API that lacks documentation
+- **EXPORT VERIFICATION**: For any export in the diff, verify it has a corresponding import in another file
+- **NULL CHECKS**: Flag any object property access, array access, or method calls that could fail with null/undefined
+- **METHOD CHANGES**: Only suggest improvements to methods that are actually shown in the diff
+
+RESPONSE FORMAT (JSON object with summary and issues):
+{
+  "summary": {
+    "description": "<2-3 sentence summary of what this code change does>",
+    "mainChanges": ["<change 1>", "<change 2>", ...],
+    "newExports": ["<list of new exported functions/classes/constants>"],
+    "riskLevel": "low" | "medium" | "high"
+  },
+  "issues": [
+    {
+      "line": <line number or range like "10-15">,
+      "severity": "critical" | "warning" | "suggestion",
+      "category": "bug" | "security" | "performance" | "style" | "unused-export" | "incomplete" | "documentation" | "null-safety",
+      "title": "<brief title>",
+      "description": "<detailed explanation>",
+      "suggestion": "<how to fix, include code if helpful>"
+    }
+  ]
+}
+
+If no issues found, return: {"summary": {...}, "issues": []}
+
+IMPORTANT: Return ONLY valid JSON object, no markdown or extra text.`;
+  }
+
+  // Build prompt for DOM-based diffs (additions only)
+  function buildDomDiffPrompt(diff, focusAreas, depthInstruction) {
     // Extract only the new/added lines for review
     let codeToReview = diff.content;
     if (diff.additions && diff.additions.length > 0) {
@@ -948,54 +842,19 @@ LINES ADDED: ${additionsCount}
 NEW/CHANGED CODE (review ONLY this - these are the additions in the PR):
 \`\`\`
 ${codeToReview.substring(0, 15000)}
-\`\`\`
+\`\`\`${buildReviewRequirementsAndFormat(focusAreas, depthInstruction)}`;
+  }
 
-CRITICAL REVIEW REQUIREMENTS:
-1. Review ONLY the new/changed code shown above - ignore any existing code
-2. ${depthInstructions[settings.reviewDepth] || depthInstructions.standard}
-3. Focus areas: ${focusAreas.join(', ')}
+  // Build the review prompt
+  function buildReviewPrompt(diff, settings) {
+    const focusAreas = buildFocusAreas(settings);
+    const depthInstruction = getDepthInstructions(settings.reviewDepth);
 
-FIRST: Provide a brief SUMMARY of what this change does (2-3 sentences max).
-
-CONTEXTUAL ANALYSIS - Flag these issues:
-- **Unused exports**: If a new function/class/constant is exported, flag it as needing to be consumed somewhere in the PR
-- **Incomplete implementations**: New functions that are declared but might not be called/used
-- **Missing imports**: If new code references something that appears to need importing
-- **Orphaned code**: New code that doesn't seem to integrate with anything
-- **API contracts**: New exported functions should have clear contracts (types, docs)
-- **Dead code**: New code paths that can never be reached
-- **Missing error handling**: New async functions without try-catch, new promises without .catch()
-- **Unfinished TODOs**: New TODO/FIXME comments that should be addressed before merge
-
-PR-SPECIFIC CHECKS:
-- If a new function is exported, ask: "Is this export consumed elsewhere in the PR?"
-- If a new interface/type is defined, ask: "Is this type used in the PR?"
-- If a new constant is exported, ask: "Where is this constant used?"
-- Flag any new public API that lacks documentation
-
-RESPONSE FORMAT (JSON object with summary and issues):
-{
-  "summary": {
-    "description": "<2-3 sentence summary of what this code change does>",
-    "mainChanges": ["<change 1>", "<change 2>", ...],
-    "newExports": ["<list of new exported functions/classes/constants>"],
-    "riskLevel": "low" | "medium" | "high"
-  },
-  "issues": [
-    {
-      "line": <line number or range like "10-15">,
-      "severity": "critical" | "warning" | "suggestion",
-      "category": "bug" | "security" | "performance" | "style" | "unused-export" | "incomplete" | "documentation",
-      "title": "<brief title>",
-      "description": "<detailed explanation>",
-      "suggestion": "<how to fix, include code if helpful>"
+    if (diff.isApiDiff) {
+      return buildApiDiffPrompt(diff, focusAreas, depthInstruction);
+    } else {
+      return buildDomDiffPrompt(diff, focusAreas, depthInstruction);
     }
-  ]
-}
-
-If no issues found, return: {"summary": {...}, "issues": []}
-
-IMPORTANT: Return ONLY valid JSON object, no markdown or extra text.`;
   }
 
   // Call Gemini API
